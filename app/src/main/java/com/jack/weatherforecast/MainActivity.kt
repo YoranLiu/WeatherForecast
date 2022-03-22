@@ -1,5 +1,6 @@
 package com.jack.weatherforecast
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -12,28 +13,51 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.jack.weatherforecast.databinding.ActivityMainBinding
 import com.jack.weatherforecast.databinding.RowWeatherBinding
-import org.jetbrains.anko.AnkoLogger
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.info
-import org.jetbrains.anko.uiThread
+import org.jetbrains.anko.*
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 import java.net.URL
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var retrofit: Retrofit
     private lateinit var weatherTimeInfo: List<Weather.Records.Location.WeatherElement.Time>
-    private val api = "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-D5B21A22-B8F0-4A30-8AC7-2A339F1E823B&locationName=%E8%87%BA%E5%8C%97%E5%B8%82&elementName=MinT"
+//    private val api = "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-D5B21A22-B8F0-4A30-8AC7-2A339F1E823B&locationName=%E8%87%BA%E5%8C%97%E5%B8%82&elementName=MinT"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityMainBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        doAsync {
-            val url = URL(api)
-            val json = url.readText()
-            val weather = Gson().fromJson<Weather>(json, Weather::class.java)
+        // check if run this app first
+        val setting = getSharedPreferences("Weather", MODE_PRIVATE)
+        val userFirst = setting.getBoolean("FIRST_RUN", true)
+        if (userFirst) // first run this app
+            setting.edit().putBoolean("FIRST_RUN", false)
+                .apply()
+        else
+            toast("歡迎回來")
 
-            weatherTimeInfo = weather.records.location[0].weatherElement[0].time
+        retrofit = Retrofit.Builder()
+            .baseUrl("https://opendata.cwb.gov.tw/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        doAsync {
+//            val url = URL(api)
+//            val json = url.readText()
+//            val weather = Gson().fromJson<Weather>(json, Weather::class.java)
+            val weatherService = retrofit.create(WeatherService::class.java)
+            val weather = weatherService.listWeather()
+                .execute()
+                .body()
+            info(weather)
+
+            if (weather != null)
+                weatherTimeInfo = weather.records.location[0].weatherElement[0].time
 
             uiThread {
                 val recycler = binding.recycler
@@ -65,10 +89,10 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
             holder.weatherInfo.setOnClickListener {
                 Intent(this@MainActivity, WeatherRecordActivity::class.java)
                     .apply {
-                        putExtra("START_TIME",wInfo.startTime)
-                        putExtra("END_TIME",wInfo.endTime)
-                        putExtra("TEMP_DEGREE",wInfo.parameter.parameterName)
-                        putExtra("TEMP_UNIT",wInfo.parameter.parameterUnit)
+                        putExtra("START_TIME", wInfo.startTime)
+                        putExtra("END_TIME", wInfo.endTime)
+                        putExtra("TEMP_DEGREE", wInfo.parameter.parameterName)
+                        putExtra("TEMP_UNIT", wInfo.parameter.parameterUnit)
                         startActivity(this)
                     }
             }
@@ -77,7 +101,6 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         override fun getItemCount(): Int {
             return weatherTimeInfo.size
         }
-
     }
 
     class WeatherHolder(view: View): RecyclerView.ViewHolder(view) {
@@ -131,17 +154,7 @@ data class Weather(
     } // Records data class
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+interface WeatherService {
+    @GET("api/v1/rest/datastore/F-C0032-001?Authorization=CWB-D5B21A22-B8F0-4A30-8AC7-2A339F1E823B&locationName=%E8%87%BA%E5%8C%97%E5%B8%82&elementName=MinT")
+    fun listWeather(): Call<Weather>
+}

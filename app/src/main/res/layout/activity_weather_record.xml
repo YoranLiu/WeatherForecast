@@ -25,13 +25,16 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="#00BCD4"
-        android:gravity="center"
-        android:text="TextView"
+        android:gravity="center_horizontal"
+
+        android:text="textView"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintBottom_toTopOf="@+id/blockB"
         app:layout_constraintEnd_toStartOf="@+id/blockB"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/blockA"
-        app:layout_constraintTop_toBottomOf="@+id/blockA" />
+        app:layout_constraintTop_toBottomOf="@+id/blockA"
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/blockB"
@@ -46,4 +49,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
