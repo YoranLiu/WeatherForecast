@@ -36,7 +36,8 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         val setting = getSharedPreferences("Weather", MODE_PRIVATE)
         val userFirst = setting.getBoolean("FIRST_RUN", true)
         if (userFirst) // first run this app
-            setting.edit().putBoolean("FIRST_RUN", false)
+            setting.edit()
+                .putBoolean("FIRST_RUN", false)
                 .apply()
         else
             toast("歡迎回來")
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
         override fun onBindViewHolder(holder: WeatherHolder, position: Int) {
             val wInfo = weatherTimeInfo.get(position)
-            info(wInfo::class.java.simpleName)
+
             holder.weatherInfo.text = """
                 ${wInfo.startTime}
                 ${wInfo.endTime}
